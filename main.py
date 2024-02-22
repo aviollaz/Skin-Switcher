@@ -3,13 +3,13 @@ import os
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog
 from shutil import copyfile
 
-with open("info.txt", "r") as file:
-    line = file.readline()
-    last_id = int(line.split("=")[1])
-
+last_id = -1
 current_skin = -1
 osu_path = ""
 multiSkin_path = ""
+
+
+
 
 class SkinSwitcher(QWidget):
     def __init__(self):
@@ -44,20 +44,27 @@ class SkinSwitcher(QWidget):
     
     def add_skin(self):
         global last_id
-
+        
         # create multiSkin folder if it does not exist
         if not os.path.exists(multiSkin_path):
             os.makedirs(multiSkin_path)
         
         # fetch last skin id and update it
-        skin_id = last_id + 1
-        with open("info.txt", "w") as file:
-            file.write(f'last_id={skin_id}')
+        # Specify the directory path
+        directory_path = multiSkin_path
 
+        # List all directories in the specified path
+        folders = [folder for folder in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, folder))]
+
+        # Extract numbers from folder names and find the highest one
+        last_id = max((int(folder.split('_')[-1]) for folder in folders if folder.startswith('skin_')), default=-1) + 1
+        skin_id = last_id
+        
         # create specific skin folder inside multiSkin
         new_skin_path = f'{multiSkin_path}/skin_{skin_id}'
         os.makedirs(new_skin_path)
         
+        # copy all of the skin files into multiSkin
         directory = QFileDialog.getExistingDirectory(self, 'Select skin folder')
         for file in os.listdir(directory):
             source_path = f'{directory}/{file}'
