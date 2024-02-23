@@ -2,14 +2,12 @@ import sys
 import os
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog
 from shutil import copyfile
+import keyboard
 
 last_id = -1
 current_skin = -1
 osu_path = ""
-multiSkin_path = ""
-
-
-
+multi_skin_path = ""
 
 class SkinSwitcher(QWidget):
     def __init__(self):
@@ -36,42 +34,41 @@ class SkinSwitcher(QWidget):
         self.setLayout(layout)
 
     def choose_directory(self):
-        global multiSkin_path
+        global multi_skin_path
         directory = QFileDialog.getExistingDirectory(self, 'Select Directory')
         if directory:
             print(f'Selected directory: {directory}')
-            multiSkin_path = f'{directory}/Skins/skinSwitcher'
+            multi_skin_path = f'{directory}/Skins/skinSwitcher'
     
     def add_skin(self):
-        global last_id
         
-        # create multiSkin folder if it does not exist
-        if not os.path.exists(multiSkin_path):
-            os.makedirs(multiSkin_path)
+        # create multi_skin folder if it does not exist
+        if not os.path.exists(multi_skin_path):
+            os.makedirs(multi_skin_path)
         
         # fetch last skin id and update it
-        # Specify the directory path
-        directory_path = multiSkin_path
+        skin_id = self.update_last_id(multi_skin_path)
 
+        # create specific skin folder inside multi_skin
+        new_skin_path = f'{multi_skin_path}/skin_{skin_id}'
+        os.makedirs(new_skin_path)
+        
+        # copy all of the skin files into multi_skin
+        directory = QFileDialog.getExistingDirectory(self, 'Select skin folder')
+
+        for file in os.listdir(directory):
+            source_path = f'{directory}/{file}'
+            destination_path = os.path.join(new_skin_path, file)
+            copyfile(source_path, destination_path)
+
+    def update_last_id(self, multi_skin_path):
         # List all directories in the specified path
-        folders = [folder for folder in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, folder))]
+        folders = [folder for folder in os.listdir(multi_skin_path) if os.path.isdir(os.path.join(multi_skin_path, folder))]
 
         # Extract numbers from folder names and find the highest one
         last_id = max((int(folder.split('_')[-1]) for folder in folders if folder.startswith('skin_')), default=-1) + 1
-        skin_id = last_id
-        
-        # create specific skin folder inside multiSkin
-        new_skin_path = f'{multiSkin_path}/skin_{skin_id}'
-        os.makedirs(new_skin_path)
-        
-        # copy all of the skin files into multiSkin
-        directory = QFileDialog.getExistingDirectory(self, 'Select skin folder')
-        for file in os.listdir(directory):
-            source_path = f'{directory}/{file}'
-            destination_path = os.path.join(new_skin_path, f'{file}#{skin_id}')
-            copyfile(source_path, destination_path)
 
-
+        return last_id
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
