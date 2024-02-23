@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog
-from shutil import copyfile
+from shutil import copytree
 import keyboard
 
 last_id = -1
@@ -50,16 +50,19 @@ class SkinSwitcher(QWidget):
         skin_id = self.update_last_id(multi_skin_path)
 
         # create specific skin folder inside multi_skin
-        new_skin_path = f'{multi_skin_path}/skin_{skin_id}'
-        os.makedirs(new_skin_path)
+        # new_skin_path = f'{multi_skin_path}/skin_{skin_id}'
+        # os.makedirs(new_skin_path)
         
         # copy all of the skin files into multi_skin
         directory = QFileDialog.getExistingDirectory(self, 'Select skin folder')
 
-        for file in os.listdir(directory):
-            source_path = f'{directory}/{file}'
-            destination_path = os.path.join(new_skin_path, file)
-            copyfile(source_path, destination_path)
+        source_path = directory
+        destination_path = f'{multi_skin_path}/skin_{skin_id}' 
+        copytree(source_path, destination_path)
+        # for file in os.listdir(directory):
+        #     source_path = f'{directory}/{file}'
+        #     destination_path = os.path.join(new_skin_path, file)
+        #     copyfile(source_path, destination_path)
 
     def update_last_id(self, multi_skin_path):
         # List all directories in the specified path
