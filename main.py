@@ -14,6 +14,7 @@ class SkinSwitcher(QWidget):
         super().__init__()
         self.initUI()
 
+
     def initUI(self):
         self.setWindowTitle('Skin Switcher')
         self.setGeometry(100, 100, 400, 400)  # Set window size
@@ -33,6 +34,7 @@ class SkinSwitcher(QWidget):
 
         self.setLayout(layout)
 
+
     def choose_directory(self):
         global multi_skin_path
         directory = QFileDialog.getExistingDirectory(self, 'Select Directory')
@@ -40,8 +42,8 @@ class SkinSwitcher(QWidget):
             print(f'Selected directory: {directory}')
             multi_skin_path = f'{directory}/Skins/skinSwitcher'
     
+
     def add_skin(self):
-        
         # create multi_skin folder if it does not exist
         if not os.path.exists(multi_skin_path):
             os.makedirs(multi_skin_path)
@@ -49,20 +51,19 @@ class SkinSwitcher(QWidget):
         # fetch last skin id and update it
         skin_id = self.update_last_id(multi_skin_path)
 
-        # create specific skin folder inside multi_skin
-        # new_skin_path = f'{multi_skin_path}/skin_{skin_id}'
-        # os.makedirs(new_skin_path)
-        
         # copy all of the skin files into multi_skin
-        directory = QFileDialog.getExistingDirectory(self, 'Select skin folder')
+        original_skin_directory = QFileDialog.getExistingDirectory(self, 'Select skin folder')
 
+        self.copy_skin_files(original_skin_directory, skin_id)
+
+    
+    def copy_skin_files(self, directory, skin_id):
         source_path = directory
         destination_path = f'{multi_skin_path}/skin_{skin_id}' 
+
+        # used copytree() instead of copyfile() because the latter breaks when copying directories
         copytree(source_path, destination_path)
-        # for file in os.listdir(directory):
-        #     source_path = f'{directory}/{file}'
-        #     destination_path = os.path.join(new_skin_path, file)
-        #     copyfile(source_path, destination_path)
+
 
     def update_last_id(self, multi_skin_path):
         # List all directories in the specified path
