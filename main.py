@@ -45,6 +45,7 @@ class SkinSwitcher(QWidget):
     
 
     def add_skin(self):
+        global multi_skin_path
         # create multi_skin folder if it does not exist
         if not os.path.exists(multi_skin_path):
             os.makedirs(multi_skin_path)
@@ -69,13 +70,15 @@ class SkinSwitcher(QWidget):
 
 
     def detect_input(self, event):
+        global current_skin_id
         if event.event_type == keyboard.KEY_DOWN:
             if keyboard.is_pressed('ctrl') and event.name in ['5', '6', '7', '8', '9', '0']:
-                self.switch_skin(current_skin_id, skin_id_of_keybind[f'ctrl+{event.name}'])
+                current_skin_id = self.switch_skin(current_skin_id, skin_id_of_keybind[f'ctrl+{event.name}'])
                 print(f'pressed ctrl+{event.name}, switching skin')
 
 
     def switch_skin(self, current_skin_id, new_skin_id):
+        global multi_skin_path
         # Return current skin files into its folder
         files = os.listdir(multi_skin_path)
 
@@ -95,6 +98,7 @@ class SkinSwitcher(QWidget):
 
         # Update the skin id     
         current_skin_id = new_skin_id
+        return current_skin_id
 
 
     def copy_skin_files(self, directory, skin_id):
