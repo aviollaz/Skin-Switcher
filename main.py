@@ -42,10 +42,6 @@ class DirectoryDialog(QDialog):
 
 
 
-
-osu_path = ""
-skin_id_of_keybind = {}
-
 class SkinSwitcher(QWidget):
     def __init__(self):
         super().__init__()
@@ -53,10 +49,11 @@ class SkinSwitcher(QWidget):
         self.last_id = -1
         self.current_skin_id = -1
         self.multi_skin_path = ""
+        self.skin_id_of_keybind = {}
 
     def initUI(self):
         self.setWindowTitle('Skin Switcher')
-        self.setGeometry(100, 100, 400, 400)  # Set window size
+        self.setGeometry(100, 100, 430, 500)  # Set window size
         self.setStyleSheet("background-color: #FFCCFF;")  # Set background color to white
 
         layout = QVBoxLayout()
@@ -104,13 +101,13 @@ class SkinSwitcher(QWidget):
     
     # saves the skins id for that specific keybind
     def handle_key_map(self, keybind, skin_id):
-        skin_id_of_keybind[keybind] = skin_id
+        self.skin_id_of_keybind[keybind] = skin_id
 
 
     def detect_input(self, event):
         if event.event_type == keyboard.KEY_DOWN:
             if keyboard.is_pressed('ctrl') and event.name in ['5', '6', '7', '8', '9', '0']:
-                self.switch_skin(skin_id_of_keybind[f'ctrl+{event.name}'])
+                self.switch_skin(self.skin_id_of_keybind[f'ctrl+{event.name}'])
                 pyautogui.keyDown('ctrl')
                 pyautogui.keyDown('shift')
                 pyautogui.keyDown('alt')
