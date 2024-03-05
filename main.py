@@ -1,9 +1,11 @@
 import sys
 import os
+import shutil
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QInputDialog, QDialog, QLabel, QLineEdit
 from shutil import copytree, move
 import keyboard
 import pyautogui
+from functools import partial
 
 username = os.getlogin()
 
@@ -42,6 +44,7 @@ class DirectoryDialog(QDialog):
 
 
 
+
 class SkinSwitcher(QWidget):
     def __init__(self):
         super().__init__()
@@ -63,51 +66,48 @@ class SkinSwitcher(QWidget):
         self.choose_dir_button.clicked.connect(self.choose_directory)
         layout.addWidget(self.choose_dir_button)
 
-        # Button to add skin
-        self.add_skin_button = QPushButton('Add a skin')
-        self.add_skin_button.clicked.connect(self.add_skin)
-        layout.addWidget(self.add_skin_button)
+        # skin lot #1
+        self.add_skin_5 = QPushButton('slot 1')
+        self.add_skin_5.clicked.connect(partial(self.add_skin, 5))
+        self.add_skin_5.setFixedSize(50,50)
+        layout.addWidget(self.add_skin_5)
+
+        # skin lot #2
+        self.add_skin_6 = QPushButton('slot 2')
+        self.add_skin_6.clicked.connect(partial(self.add_skin, 6))
+        self.add_skin_6.setFixedSize(50,50)
+        layout.addWidget(self.add_skin_6)
+
+        # reset button
+        self.reset_button = QPushButton("reset skins")
+        self.reset_button.clicked.connect(self.reset_ss)
+        layout.addWidget(self.reset_button)
+
         self.setLayout(layout)
 
 
     def choose_directory(self):
-        # directory = QFileDialog.getExistingDirectory(self, 'Select Directory')
-        # if directory:
-        #     print(f'Selected directory: {directory}')
-
         dialog = DirectoryDialog(self)
         dialog.exec()
         directory = dialog.osu_path
         self.multi_skin_path = f'{directory}/Skins/skinSwitcher'
 
-    def add_skin(self):
+    def add_skin(self, slot):
         # create multi_skin folder if it does not exist
         if not os.path.exists(self.multi_skin_path):
             os.makedirs(self.multi_skin_path)
-        
-        # fetch last skin id and update it
-        skin_id = self.update_last_id()
 
         # copy all of the skin files into multi_skin
         original_skin_directory = QFileDialog.getExistingDirectory(self, 'Select skin folder')
 
-        self.copy_skin_files(original_skin_directory, skin_id)
+        self.copy_skin_files(original_skin_directory, slot)
 
-        keybinds = ['ctrl+5', 'ctrl+6', 'ctrl+7', 'ctrl+8', 'ctrl+9', 'ctrl+0']
-        keybind, ok = QInputDialog.getItem(self, 'choose keybind', 'select a keybind for this skin', keybinds, 0, True)
-        if ok:
-            self.handle_key_map(keybind, skin_id)
-            
     
-    # saves the skins id for that specific keybind
-    def handle_key_map(self, keybind, skin_id):
-        self.skin_id_of_keybind[keybind] = skin_id
-
 
     def detect_input(self, event):
         if event.event_type == keyboard.KEY_DOWN:
             if keyboard.is_pressed('ctrl') and event.name in ['5', '6', '7', '8', '9', '0']:
-                self.switch_skin(self.skin_id_of_keybind[f'ctrl+{event.name}'])
+                self.switch_skin(event.name)
                 pyautogui.keyDown('ctrl')
                 pyautogui.keyDown('shift')
                 pyautogui.keyDown('alt')
@@ -122,6 +122,8 @@ class SkinSwitcher(QWidget):
 
 
     def switch_skin(self, new_skin_id):
+        self.current_skin_id = self.fetch_current_skin()
+
         # Return current skin files into its folder
         files = os.listdir(self.multi_skin_path)
 
@@ -139,28 +141,39 @@ class SkinSwitcher(QWidget):
             destination_path = self.multi_skin_path
             move(source_path, destination_path)
 
-        # Update the skin id     
-        self.current_skin_id = new_skin_id
+        with open("info.txt", "w") as file:
+            file.write(f"current_skin={new_skin_id}")
+            file.close()
 
 
-    def copy_skin_files(self, directory, skin_id):
+    def copy_skin_files(self, directory, slot):
         source_path = directory
-        destination_path = f'{self.multi_skin_path}/skin_{skin_id}' 
+        destination_path = f'{self.multi_skin_path}/skin_{slot}' 
+
+        if os.path.exists(destination_path):
+            shutil.rmtree(destination_path)
 
         # used copytree() instead of copyfile() because the latter breaks when copying directories
         copytree(source_path, destination_path)
 
 
-    def update_last_id(self):
-        # List all directories in the specified path
-        folders = [folder for folder in os.listdir(self.multi_skin_path) if os.path.isdir(os.path.join(self.multi_skin_path, folder))]
+    def fetch_current_skin(self):
+        if os.path.exists("info.txt"):
+            with open("info.txt", "r") as file:
+                try:
+                    self.current_skin_id = int(file.readline().split("=")[1])
+                except:
+                    print("invalid skin id")
+        else:
+            with open("info.txt", "w") as file:
+                file.write('current_skin=-1')
+        return self.current_skin_id
+    
+    def reset_ss(self):
+        shutil.rmtree(self.multi_skin_path)
 
-        # Extract numbers from folder names and find the highest one
-        self.last_id = max((int(folder.split('_')[-1]) for folder in folders if folder.startswith('skin_')), default=-1) + 1
-
-        return self.last_id    
-
-
+        with open("info.txt", "w") as file:
+            file.write("current_skin=-1")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
